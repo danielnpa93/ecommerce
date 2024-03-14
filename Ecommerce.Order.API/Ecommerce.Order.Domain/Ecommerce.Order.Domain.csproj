@@ -1,0 +1,11 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\buildingBlocks\Ecommerce.Core\Ecommerce.Core.csproj" />
+  </ItemGroup>
+
+</Project>

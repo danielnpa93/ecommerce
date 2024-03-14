@@ -1,0 +1,30 @@
+
+
+FROM mcr.microsoft.com/dotnet/sdk:8.0-alpine3.18 AS build-env
+WORKDIR /App
+
+COPY ./Ecommerce.Client.API/. ./Ecommerce.Client.API
+COPY ./buildingBlocks/. ./buildingBlocks
+
+
+RUN dotnet restore "./Ecommerce.Client.API/Ecommerce.Clients.API.csproj"
+
+
+RUN dotnet publish "./Ecommerce.Client.API/Ecommerce.Clients.API.csproj" -c Release -o out
+
+FROM mcr.microsoft.com/dotnet/aspnet:8.0-alpine3.18
+
+WORKDIR /App
+COPY --from=build-env /App/out .
+
+# ENV ASPNETCORE_URLS http://+:8080
+
+
+EXPOSE 8080
+# EXPOSE 8081
+# EXPOSE 80
+# EXPOSE 443
+# EXPOSE 8080
+
+ENTRYPOINT ["dotnet", "Ecommerce.Clients.API.dll"]
+#  ENTRYPOINT ["tail", "-f", "/dev/null"]

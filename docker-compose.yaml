@@ -1,0 +1,165 @@
+version: '3.8'
+services:
+  client_api:
+    build: 
+      context: .
+      dockerfile: dockerfile.client.api
+    image: ecommerce_client_api:latest
+    container_name: client_api
+    ports:
+      - 5000:8080
+      # - 5100:8081
+      # - 5001:443
+    depends_on:
+      - "db_client"
+      - "rabbitmq"
+      - "identity_api"
+    links:
+      - "db_client"
+    networks:
+      - ecommerce-network
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ConnectionStrings__DefaultConnection: "Server=db_client;Port=5432;Database=db_client;User Id=user_client;Password=NoT@S3Cr3T!;"
+      MessageQueueConnection__MessageBus: "host=rabbitmq:5672;username=admin;password=NoT@S3Cr3T!;publisherConfirms=true;timeout=10"
+      AppSettings__AutenticacaoJwksUrl: "http://identity_api:8080/jwks"
+  
+  db_client:
+    image: postgres:12.18-alpine3.18
+    container_name: client_db_postgres
+    volumes:
+      # - "./docker/clientdb/postgres:/home/dynamodblocal/data"
+      - "./docker/clientdb/seed/seed_data.sql:/docker-entrypoint-initdb.d/seed_data.sql"
+    environment:
+      - POSTGRES_PASSWORD=NoT@S3Cr3T!
+      - POSTGRES_USER=user_client
+      - POSTGRES_DB=db_client
+    ports:
+      - 5432:5432
+    networks:
+      - ecommerce-network
+
+  identity_api:
+    build: 
+      context: .
+      dockerfile: dockerfile.identity.api
+    image: ecommerce_identity_api:latest
+    container_name: identity_api
+    ports:
+      - 5001:8080
+      # - 5101:8081
+    depends_on:
+      - "db_identity"
+      - "rabbitmq"
+    links:
+      - "db_identity"
+    networks:
+      - ecommerce-network
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ConnectionStrings__DefaultConnection: "Server=db_identity;Port=5432;Database=db_identity;User Id=user_identity;Password=NoT@S3Cr3T!;"
+      MessageQueueConnection__MessageBus: "host=rabbitmq:5672;username=admin;password=NoT@S3Cr3T!;publisherConfirms=true;timeout=10"
+      AppTokenSettings__RefreshTokenExpiration: "8"
+
+  db_identity:
+    image: postgres:12.18-alpine3.18
+    container_name: identity_db_postgres
+    volumes:
+      # - "./docker/clientdb/postgres:/home/dynamodblocal/data"
+      - "./docker/identitydb/seed/seed_data.sql:/docker-entrypoint-initdb.d/seed_data.sql"
+    environment:
+      - POSTGRES_PASSWORD=NoT@S3Cr3T!
+      - POSTGRES_USER=user_identity
+      - POSTGRES_DB=db_identity
+    ports:
+      - 5433:5432
+    networks:
+      - ecommerce-network
+
+  product_api:
+    build: 
+      context: .
+      dockerfile: dockerfile.product.api
+    image: ecommerce_product_api:latest
+    container_name: product_api
+    ports:
+      - 5002:8080
+    depends_on:
+      - "db_product"
+      - "rabbitmq"
+    links:
+      - "db_product"
+    networks:
+      - ecommerce-network
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ConnectionStrings__DefaultConnection: "Server=db_product;Port=5432;Database=db_product;User Id=user_product;Password=NoT@S3Cr3T!;"
+      MessageQueueConnection__MessageBus: "host=rabbitmq:5672;username=admin;password=NoT@S3Cr3T!;publisherConfirms=true;timeout=10"
+      AppSettings__AutenticacaoJwksUrl: "http://identity_api:8080/jwks"
+
+  db_product:
+    image: postgres:12.18-alpine3.18
+    container_name: product_db_postgres
+    volumes:
+      - "./docker/productdb/seed/seed_data.sql:/docker-entrypoint-initdb.d/seed_data.sql"
+    environment:
+      - POSTGRES_PASSWORD=NoT@S3Cr3T!
+      - POSTGRES_USER=user_product
+      - POSTGRES_DB=db_product
+    ports:
+      - 5434:5432
+    networks:
+      - ecommerce-network
+
+  shopping_cart_api:
+    build: 
+      context: .
+      dockerfile: dockerfile.basket.api
+    image: ecommerce_shoppingcart_api:latest
+    container_name: shoppingcart_api
+    ports:
+      - 5003:8080
+    depends_on:
+      - "db_shopping_cart"
+      - "rabbitmq"
+    links:
+      - "db_shopping_cart"
+    networks:
+      - ecommerce-network
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ConnectionStrings__DefaultConnection: "Server=db_shopping_cart;Port=5432;Database=db_basket;User Id=user_basket;Password=NoT@S3Cr3T!;"
+      MessageQueueConnection__MessageBus: "host=rabbitmq:5672;username=admin;password=NoT@S3Cr3T!;publisherConfirms=true;timeout=10"
+      AppSettings__AutenticacaoJwksUrl: "http://identity_api:8080/jwks"
+
+  db_shopping_cart:
+    image: postgres:12.18-alpine3.18
+    container_name: shoppingCart_db_postgres
+    volumes:
+      - "./docker/shoppingcartdb/seed/seed_data.sql:/docker-entrypoint-initdb.d/seed_data.sql"
+    environment:
+      - POSTGRES_PASSWORD=NoT@S3Cr3T!
+      - POSTGRES_USER=user_basket
+      - POSTGRES_DB=db_basket
+    ports:
+      - 5435:5432
+
+  rabbitmq:
+    image: rabbitmq:3.12.13-alpine
+    container_name: rabbitmq_management
+    ports: 
+      # - 15672:15672 # communication with the web management API 
+      - 5672:5672
+    volumes:
+      - /docker/rabbitmq/data/:/var/lib/rabbitmq/
+    environment:
+      - RABBITMQ_DEFAULT_USER=admin
+      - RABBITMQ_DEFAULT_PASS=NoT@S3Cr3T!
+    networks:
+      - ecommerce-network
+    # restart: always
+  
+networks:
+  ecommerce-network:
+    driver: bridge
+    name: ecommerce-network

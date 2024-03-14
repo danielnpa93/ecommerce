@@ -1,0 +1,74 @@
+version: '3.8'
+services:
+  
+  db_client:
+    image: postgres:12.18-alpine3.18
+    container_name: client_db_postgres
+    volumes:
+      - "./docker/clientdb/seed/seed_data.sql:/docker-entrypoint-initdb.d/seed_data.sql"
+    environment:
+      - POSTGRES_PASSWORD=NoT@S3Cr3T!
+      - POSTGRES_USER=user_client
+      - POSTGRES_DB=db_client
+    ports:
+      - 5432:5432
+
+  db_identity:
+    image: postgres:12.18-alpine3.18
+    container_name: identity_db_postgres
+    volumes:
+      - "./docker/identitydb/seed/seed_data.sql:/docker-entrypoint-initdb.d/seed_data.sql"
+    environment:
+      - POSTGRES_PASSWORD=NoT@S3Cr3T!
+      - POSTGRES_USER=user_identity
+      - POSTGRES_DB=db_identity
+    ports:
+      - 5433:5432
+
+  db_product:
+    image: postgres:12.18-alpine3.18
+    container_name: product_db_postgres
+    volumes:
+      - "./docker/productdb/seed/seed_data.sql:/docker-entrypoint-initdb.d/seed_data.sql"
+    environment:
+      - POSTGRES_PASSWORD=NoT@S3Cr3T!
+      - POSTGRES_USER=user_product
+      - POSTGRES_DB=db_product
+    ports:
+      - 5434:5432
+
+  db_shopping_cart:
+    image: postgres:12.18-alpine3.18
+    container_name: shoppingCart_db_postgres
+    volumes:
+      - "./docker/productdb/seed/seed_data.sql:/docker-entrypoint-initdb.d/seed_data.sql"
+    environment:
+      - POSTGRES_PASSWORD=NoT@S3Cr3T!
+      - POSTGRES_USER=user_basket
+      - POSTGRES_DB=db_basket
+    ports:
+      - 5435:5432
+  
+  db_order:
+    image: postgres:12.18-alpine3.18
+    container_name: order_db_postgres
+    volumes:
+      - "./docker/orderdb/seed/seed_data.sql:/docker-entrypoint-initdb.d/seed_data.sql"
+    environment:
+      - POSTGRES_PASSWORD=NoT@S3Cr3T!
+      - POSTGRES_USER=user_order
+      - POSTGRES_DB=db_order
+    ports:
+      - 5436:5432
+
+  rabbitmq:
+    image: rabbitmq:3.12.13-alpine
+    container_name: rabbitmq_management
+    ports: 
+      - 5672:5672
+    volumes:
+      - /docker/rabbitmq/data/:/var/lib/rabbitmq/
+    environment:
+      - RABBITMQ_DEFAULT_USER=admin
+      - RABBITMQ_DEFAULT_PASS=NoT@S3Cr3T!
+ 
